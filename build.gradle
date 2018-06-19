@@ -1,0 +1,61 @@
+buildscript {
+	repositories {
+		maven {
+         url "https://nexus3.spe.sony.com/repository/maven-public/"
+        }
+	}
+	dependencies { 
+		classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6.2'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'SonarQube Example'
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	maven {
+         url "https://nexus3.spe.sony.com/repository/maven-public/"
+    }
+}
+
+dependencies {
+	providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+	testCompile("org.mockito:mockito-all:1.10.8")
+	testCompile("org.powermock:powermock-module-junit4:1.6.4")
+	testCompile("org.powermock:powermock-api-mockito:1.6.4")
+	testCompile("junit:junit:4.12")
+	testCompile 'io.cucumber:cucumber-java:3.0.2'
+    testCompile 'io.cucumber:cucumber-junit:3.0.2'
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testRuntime
+    }
+}
+
+task cucumber() {
+    dependsOn assemble, compileTestJava
+    doLast {
+        javaexec {
+            main = "cucumber.api.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = ['--plugin', 'pretty', '--glue', 'gradle.cucumber', 'src/test/resources']
+        }
+    }
+}
+
+war {
+    from 'src/web'
+}
